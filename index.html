@@ -132,9 +132,22 @@
 </div>
 
 <script>
-(function(){
-  const fab = document.getElementById('albertLangFab');
-  const btn = fab.querySelector('button');
+(function () {
+  // 1) Detect Google Translate viewer and remove the widget there.
+  // Covers both translate.google.com/translate?... and *.translate.goog proxy.
+  const inTranslateViewer =
+    /(^|\.)translate\.google\./.test(location.hostname) || /\.translate\.goog$/.test(location.hostname);
+  if (inTranslateViewer) {
+    const el = document.getElementById('albertLangFab');
+    if (el) el.remove(); // or: el.style.display = 'none';
+    return; // stop: don't add handlers here
+  }
+
+  // 2) OPTIONAL: open the translated page in the SAME tab to reduce friction.
+  const OPEN_IN_NEW_TAB = false;
+
+  const fab  = document.getElementById('albertLangFab');
+  const btn  = fab.querySelector('button');
   const menu = fab.querySelector('.lang-menu');
 
   const toggle = () => {
@@ -144,20 +157,25 @@
   };
 
   btn.addEventListener('click', toggle);
-
-  document.addEventListener('click', (e)=>{
-    if(!fab.contains(e.target)) {menu.style.display='none';btn.setAttribute('aria-expanded','false');}
+  document.addEventListener('click', (e) => {
+    if (!fab.contains(e.target)) {
+      menu.style.display = 'none';
+      btn.setAttribute('aria-expanded','false');
+    }
   });
 
   const base = encodeURIComponent(location.href);
 
-  menu.querySelectorAll('a[data-lang]').forEach(a=>{
-    a.addEventListener('click', (e)=>{
+  menu.querySelectorAll('a[data-lang]').forEach(a => {
+    a.addEventListener('click', (e) => {
       e.preventDefault();
-      const tl = a.getAttribute('data-lang');
-      // Abre la versión "traducida" de esta misma URL en una pestaña nueva
+      const tl  = a.getAttribute('data-lang');
       const url = `https://translate.google.com/translate?sl=auto&tl=${encodeURIComponent(tl)}&u=${base}`;
-      window.open(url, '_blank', 'noopener'); // si prefieres la misma pestaña, usa: location.href = url;
+      if (OPEN_IN_NEW_TAB) {
+        window.open(url, '_blank', 'noopener');
+      } else {
+        location.href = url; // same tab => no orphaned original, cleaner UX
+      }
     });
   });
 })();
